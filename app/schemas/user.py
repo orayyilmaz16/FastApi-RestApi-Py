@@ -9,10 +9,16 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
-    email: str
+    email: EmailStr
+    bio: str | None
+    avatar_url: str | None
+    skills: list[str]
+    settings: dict
+    is_active: bool
+    is_admin: bool
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class LoginRequest(BaseModel):
     email: EmailStr 
@@ -21,4 +27,14 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class UserUpdateSchema(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+    skills: list[str] | None = None
+    settings: dict | None = None
+
 

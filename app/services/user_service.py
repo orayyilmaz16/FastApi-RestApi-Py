@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 
 from app.database import SessionLocal
 from app.models.user import User
-from app.schemas.user import UserCreate, LoginRequest
+from app.schemas.user import UserCreate, LoginRequest, UserUpdateSchema
 
 
 # 🔥 Artık bcrypt değil, argon2 kullanıyoruz
@@ -70,4 +70,21 @@ def get_user_by_id(user_id: int):
         return db.query(User).filter(User.id == user_id).first()
     finally:
         db.close()
+
+def update_user_profile(db: Session, user_id: int, data: UserUpdateSchema):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+def get_all_users(db: Session):
+    return db.query(User).all()
+
+
 

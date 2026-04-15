@@ -1,18 +1,31 @@
-from fastapi import APIRouter,Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.schemas.user import UserCreate,UserResponse
-from app.services.user_service import create_user,get_users
 from app.auth.jwt_current_user import get_current_user
-from app.models.user import User
+from app.schemas.user import UserUpdateSchema, UserResponse
+from app.services.user_service import update_user_profile, get_all_users
 
-router = APIRouter(prefix="/users",tags=["Users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/",response_model=UserResponse)
-def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user = Depends(get_current_user)):
+    return current_user
 
-@router.get("/",response_model=list[UserResponse])
-def get_users_endpoint(db: Session = Depends(get_db)):
-    return get_users(db)
+@router.put("/me", response_model=UserResponse)
+def update_me(
+    data: UserUpdateSchema,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return update_user_profile(db, current_user.id, data)
 
+@router.get("/", response_model=list[UserResponse])
+def list_users(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(403, "Admin required")
+
+    return get_all_users(db)
